@@ -18,7 +18,8 @@ The small MethodChannel bridge uses Android AlarmManager and NotificationManager
 directly. No additional Flutter runtime packages are needed. Android's own
 timezone database is used, including timezone changes while Flutter is stopped.
 Java time support on older Android is supplied by `desugar_jdk_libs:2.1.5`.
-The minimum Android version is API 23. Android unit tests use JUnit 4.13.2.
+The minimum Android version follows Flutter (at least API 23). Android unit
+tests use JUnit 4.13.2.
 
 Each active habit has one durable one-shot alarm. The receiver delivers and
 schedules the next local-calendar occurrence, without starting Flutter. Reboot,
@@ -43,7 +44,7 @@ allow background activity/autostart for DidOne Habits Dev if needed.
 
 ## APK without installing Flutter locally
 
-The `Build Habits APK` GitHub Actions workflow pins Flutter 3.38.5, JDK 17,
+The `Build Habits APK` GitHub Actions workflow pins Flutter 3.44.0, JDK 17,
 Ubuntu 24.04 and uses the checked-in pub lockfile and Gradle wrapper version.
 It generates Drift code, formats changed Dart sources, runs analysis, all Flutter
 tests, builds an APK and runs Android recurrence tests. It runs on pull requests

@@ -40,7 +40,7 @@ class HabitReminderScheduler(private val context: Context) {
             context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             return false
         }
-        if (!notifications.areNotificationsEnabled()) return false
+        if (Build.VERSION.SDK_INT >= 24 && !notifications.areNotificationsEnabled()) return false
         return Build.VERSION.SDK_INT < 26 ||
             notifications.getNotificationChannel(CHANNEL)?.importance != NotificationManager.IMPORTANCE_NONE
     }
@@ -73,9 +73,10 @@ class HabitReminderScheduler(private val context: Context) {
             val id = it.getInt("id")
             alarms.cancel(alarmIntent(id))
             notifications.cancel("habit", id)
-            if (id !in ids) preferences.edit().remove("next_$id").remove("last_$id").apply()
+            if (id !in ids) preferences.edit().remove("next_$id").remove("last_$id").remove("config_$id").apply()
         }
-        reschedule()
+        ensureChannel()
+        snapshot().forEach { schedule(it, keepPending = true) }
     }
 
     fun reschedule() {
@@ -90,16 +91,28 @@ class HabitReminderScheduler(private val context: Context) {
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
-    private fun schedule(reminder: JSONObject) {
+    private fun schedule(reminder: JSONObject, keepPending: Boolean = false) {
         val id = reminder.getInt("id")
         val days = reminder.getJSONArray("weekdays")
-        val next = ReminderTime.next(
-            Instant.now(), ZoneId.systemDefault(),
+        val now = Instant.now()
+        val zone = ZoneId.systemDefault()
+        val config = "${reminder.getInt("hour")}:${reminder.getInt("minute")}:$days:$zone"
+        val unchanged = preferences.getString("config_$id", null) == config
+        if (!unchanged) preferences.edit().remove("last_$id").apply()
+        val pending = preferences.getLong("next_$id", 0)
+        // Resuming Flutter must not cancel an inexact alarm that is already due
+        // today but has been delayed by Doze. Rebase on system clock changes.
+        val pendingDate = Instant.ofEpochMilli(pending).atZone(zone).toLocalDate()
+        val today = now.atZone(zone).toLocalDate()
+        val preserve = keepPending && unchanged && pending > 0 &&
+            pendingDate >= today && preferences.getString("last_$id", null) != pendingDate.toString()
+        val next = if (preserve) pending else ReminderTime.next(
+            now, zone,
             reminder.getInt("hour"), reminder.getInt("minute"),
             (0 until days.length()).map { days.getInt(it) }.toSet(),
             preferences.getString("last_$id", null),
         ).toEpochMilli()
-        check(preferences.edit().putLong("next_$id", next).commit())
+        check(preferences.edit().putLong("next_$id", next).putString("config_$id", config).commit())
         val intent = alarmIntent(id, next)
         try {
             if (exactAllowed()) {
