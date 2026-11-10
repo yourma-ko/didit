@@ -15,9 +15,18 @@ const dbFileName = 'didit';
 
 @DriftDatabase(tables: [Trackers, Logs])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  final Future<void> Function(List<Map<String, dynamic>>)? _reminderDelivery;
 
-  AppDatabase.forTesting(super.executor);
+  AppDatabase()
+      : _reminderDelivery = ReminderPlatform.replace,
+        super(_openConnection());
+
+  // Database/widget tests should not cross into an actual Android method
+  // channel. Tests of delivery can explicitly inject a fake or the mock bridge.
+  AppDatabase.forTesting(QueryExecutor executor,
+      {Future<void> Function(List<Map<String, dynamic>>)? reminderDelivery})
+      : _reminderDelivery = reminderDelivery,
+        super(executor);
 
   @override
   int get schemaVersion => 5;
@@ -84,9 +93,10 @@ class AppDatabase extends _$AppDatabase {
   /// Serialize reads and platform writes so fast edits cannot restore old alarms.
   /// The native snapshot is a delivery cache; SQLite remains authoritative.
   Future<bool> syncReminders() async {
+    final deliver = _reminderDelivery;
+    if (deliver == null) return true;
     var succeeded = true;
     final sync = _reminderSync.then((_) async {
-      if (!ReminderPlatform.isSupported) return;
       final habits = await (select(trackers)
             ..where((t) => t.type.equals('habit') & t.archived.equals(false)))
           .get();
@@ -100,7 +110,7 @@ class AppDatabase extends _$AppDatabase {
           'title': [habit.emoji, habit.name].whereType<String>().join(' '),
         });
       }
-      await ReminderPlatform.replace(reminders);
+      await deliver(reminders);
     });
     _reminderSync = sync.catchError((Object error, StackTrace stack) {
       succeeded = false;

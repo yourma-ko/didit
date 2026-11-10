@@ -44,7 +44,8 @@ void main() {
         }
         return null;
       });
-      db = AppDatabase.forTesting(NativeDatabase.memory());
+      db = AppDatabase.forTesting(NativeDatabase.memory(),
+          reminderDelivery: ReminderPlatform.replace);
     });
 
     tearDown(() async {

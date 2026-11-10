@@ -41,7 +41,8 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-fatal-infos
       - name: Flutter tests
-        run: flutter test
+        timeout-minutes: 6
+        run: flutter test --reporter expanded
       # Optional persistent development key. Without it each runner creates a
       # fresh debug key; see docs/habit-reminders.md before installing updates.
       - name: Restore development signing key
