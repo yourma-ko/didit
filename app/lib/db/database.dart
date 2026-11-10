@@ -155,7 +155,8 @@ class AppDatabase extends _$AppDatabase {
       final trackerIds = <int>{};
       for (final t in (data['trackers'] as List)) {
         final tracker = Tracker.fromJson(t as Map<String, dynamic>);
-        HabitReminder.decode(tracker.habitReminder); // Validate before committing.
+        HabitReminder.decode(
+            tracker.habitReminder); // Validate before committing.
         await into(trackers).insert(tracker.toCompanion(true));
         trackerIds.add(tracker.id);
       }

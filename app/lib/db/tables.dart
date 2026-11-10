@@ -19,7 +19,8 @@ class Trackers extends Table {
       text().nullable()(); // 'daily' | 'weekly' | 'monthly'
   TextColumn get habitValueOptions =>
       text().nullable()(); // JSON array of label strings
-  TextColumn get habitReminder => text().nullable()(); // JSON wall-clock schedule
+  TextColumn get habitReminder =>
+      text().nullable()(); // JSON wall-clock schedule
   BoolColumn get habitAllowMultiple => boolean().nullable()();
   BoolColumn get habitFreezeEnabled => boolean().nullable()();
   IntColumn get habitFreezeEarnInterval => integer().nullable()();

@@ -30,7 +30,8 @@ class ReminderPlatform {
     if (isSupported) await channel.invokeMethod<void>('exactAlarmSettings');
   }
 
-  static Future<void> bindNotificationTap(Future<void> Function(int) open) async {
+  static Future<void> bindNotificationTap(
+      Future<void> Function(int) open) async {
     if (!isSupported) return;
     channel.setMethodCallHandler((call) async {
       if (call.method == 'openTracker') await open(call.arguments as int);

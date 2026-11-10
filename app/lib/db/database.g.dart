@@ -72,6 +72,12 @@ class $TrackersTable extends Trackers with TableInfo<$TrackersTable, Tracker> {
   late final GeneratedColumn<String> habitValueOptions =
       GeneratedColumn<String>('habit_value_options', aliasedName, true,
           type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _habitReminderMeta =
+      const VerificationMeta('habitReminder');
+  @override
+  late final GeneratedColumn<String> habitReminder = GeneratedColumn<String>(
+      'habit_reminder', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _habitAllowMultipleMeta =
       const VerificationMeta('habitAllowMultiple');
   @override
@@ -177,6 +183,7 @@ class $TrackersTable extends Trackers with TableInfo<$TrackersTable, Tracker> {
         modifiedAt,
         habitPeriod,
         habitValueOptions,
+        habitReminder,
         habitAllowMultiple,
         habitFreezeEnabled,
         habitFreezeEarnInterval,
@@ -256,6 +263,12 @@ class $TrackersTable extends Trackers with TableInfo<$TrackersTable, Tracker> {
           _habitValueOptionsMeta,
           habitValueOptions.isAcceptableOrUnknown(
               data['habit_value_options']!, _habitValueOptionsMeta));
+    }
+    if (data.containsKey('habit_reminder')) {
+      context.handle(
+          _habitReminderMeta,
+          habitReminder.isAcceptableOrUnknown(
+              data['habit_reminder']!, _habitReminderMeta));
     }
     if (data.containsKey('habit_allow_multiple')) {
       context.handle(
@@ -369,6 +382,8 @@ class $TrackersTable extends Trackers with TableInfo<$TrackersTable, Tracker> {
           .read(DriftSqlType.string, data['${effectivePrefix}habit_period']),
       habitValueOptions: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}habit_value_options']),
+      habitReminder: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}habit_reminder']),
       habitAllowMultiple: attachedDatabase.typeMapping.read(
           DriftSqlType.bool, data['${effectivePrefix}habit_allow_multiple']),
       habitFreezeEnabled: attachedDatabase.typeMapping.read(
@@ -419,6 +434,7 @@ class Tracker extends DataClass implements Insertable<Tracker> {
   final DateTime modifiedAt;
   final String? habitPeriod;
   final String? habitValueOptions;
+  final String? habitReminder;
   final bool? habitAllowMultiple;
   final bool? habitFreezeEnabled;
   final int? habitFreezeEarnInterval;
@@ -444,6 +460,7 @@ class Tracker extends DataClass implements Insertable<Tracker> {
       required this.modifiedAt,
       this.habitPeriod,
       this.habitValueOptions,
+      this.habitReminder,
       this.habitAllowMultiple,
       this.habitFreezeEnabled,
       this.habitFreezeEarnInterval,
@@ -476,6 +493,9 @@ class Tracker extends DataClass implements Insertable<Tracker> {
     }
     if (!nullToAbsent || habitValueOptions != null) {
       map['habit_value_options'] = Variable<String>(habitValueOptions);
+    }
+    if (!nullToAbsent || habitReminder != null) {
+      map['habit_reminder'] = Variable<String>(habitReminder);
     }
     if (!nullToAbsent || habitAllowMultiple != null) {
       map['habit_allow_multiple'] = Variable<bool>(habitAllowMultiple);
@@ -540,6 +560,9 @@ class Tracker extends DataClass implements Insertable<Tracker> {
       habitValueOptions: habitValueOptions == null && nullToAbsent
           ? const Value.absent()
           : Value(habitValueOptions),
+      habitReminder: habitReminder == null && nullToAbsent
+          ? const Value.absent()
+          : Value(habitReminder),
       habitAllowMultiple: habitAllowMultiple == null && nullToAbsent
           ? const Value.absent()
           : Value(habitAllowMultiple),
@@ -600,6 +623,7 @@ class Tracker extends DataClass implements Insertable<Tracker> {
       habitPeriod: serializer.fromJson<String?>(json['habitPeriod']),
       habitValueOptions:
           serializer.fromJson<String?>(json['habitValueOptions']),
+      habitReminder: serializer.fromJson<String?>(json['habitReminder']),
       habitAllowMultiple:
           serializer.fromJson<bool?>(json['habitAllowMultiple']),
       habitFreezeEnabled:
@@ -635,6 +659,7 @@ class Tracker extends DataClass implements Insertable<Tracker> {
       'modifiedAt': serializer.toJson<DateTime>(modifiedAt),
       'habitPeriod': serializer.toJson<String?>(habitPeriod),
       'habitValueOptions': serializer.toJson<String?>(habitValueOptions),
+      'habitReminder': serializer.toJson<String?>(habitReminder),
       'habitAllowMultiple': serializer.toJson<bool?>(habitAllowMultiple),
       'habitFreezeEnabled': serializer.toJson<bool?>(habitFreezeEnabled),
       'habitFreezeEarnInterval':
@@ -665,6 +690,7 @@ class Tracker extends DataClass implements Insertable<Tracker> {
           DateTime? modifiedAt,
           Value<String?> habitPeriod = const Value.absent(),
           Value<String?> habitValueOptions = const Value.absent(),
+          Value<String?> habitReminder = const Value.absent(),
           Value<bool?> habitAllowMultiple = const Value.absent(),
           Value<bool?> habitFreezeEnabled = const Value.absent(),
           Value<int?> habitFreezeEarnInterval = const Value.absent(),
@@ -692,6 +718,8 @@ class Tracker extends DataClass implements Insertable<Tracker> {
         habitValueOptions: habitValueOptions.present
             ? habitValueOptions.value
             : this.habitValueOptions,
+        habitReminder:
+            habitReminder.present ? habitReminder.value : this.habitReminder,
         habitAllowMultiple: habitAllowMultiple.present
             ? habitAllowMultiple.value
             : this.habitAllowMultiple,
@@ -744,6 +772,9 @@ class Tracker extends DataClass implements Insertable<Tracker> {
       habitValueOptions: data.habitValueOptions.present
           ? data.habitValueOptions.value
           : this.habitValueOptions,
+      habitReminder: data.habitReminder.present
+          ? data.habitReminder.value
+          : this.habitReminder,
       habitAllowMultiple: data.habitAllowMultiple.present
           ? data.habitAllowMultiple.value
           : this.habitAllowMultiple,
@@ -799,6 +830,7 @@ class Tracker extends DataClass implements Insertable<Tracker> {
           ..write('modifiedAt: $modifiedAt, ')
           ..write('habitPeriod: $habitPeriod, ')
           ..write('habitValueOptions: $habitValueOptions, ')
+          ..write('habitReminder: $habitReminder, ')
           ..write('habitAllowMultiple: $habitAllowMultiple, ')
           ..write('habitFreezeEnabled: $habitFreezeEnabled, ')
           ..write('habitFreezeEarnInterval: $habitFreezeEarnInterval, ')
@@ -829,6 +861,7 @@ class Tracker extends DataClass implements Insertable<Tracker> {
         modifiedAt,
         habitPeriod,
         habitValueOptions,
+        habitReminder,
         habitAllowMultiple,
         habitFreezeEnabled,
         habitFreezeEarnInterval,
@@ -858,6 +891,7 @@ class Tracker extends DataClass implements Insertable<Tracker> {
           other.modifiedAt == this.modifiedAt &&
           other.habitPeriod == this.habitPeriod &&
           other.habitValueOptions == this.habitValueOptions &&
+          other.habitReminder == this.habitReminder &&
           other.habitAllowMultiple == this.habitAllowMultiple &&
           other.habitFreezeEnabled == this.habitFreezeEnabled &&
           other.habitFreezeEarnInterval == this.habitFreezeEarnInterval &&
@@ -885,6 +919,7 @@ class TrackersCompanion extends UpdateCompanion<Tracker> {
   final Value<DateTime> modifiedAt;
   final Value<String?> habitPeriod;
   final Value<String?> habitValueOptions;
+  final Value<String?> habitReminder;
   final Value<bool?> habitAllowMultiple;
   final Value<bool?> habitFreezeEnabled;
   final Value<int?> habitFreezeEarnInterval;
@@ -910,6 +945,7 @@ class TrackersCompanion extends UpdateCompanion<Tracker> {
     this.modifiedAt = const Value.absent(),
     this.habitPeriod = const Value.absent(),
     this.habitValueOptions = const Value.absent(),
+    this.habitReminder = const Value.absent(),
     this.habitAllowMultiple = const Value.absent(),
     this.habitFreezeEnabled = const Value.absent(),
     this.habitFreezeEarnInterval = const Value.absent(),
@@ -936,6 +972,7 @@ class TrackersCompanion extends UpdateCompanion<Tracker> {
     required DateTime modifiedAt,
     this.habitPeriod = const Value.absent(),
     this.habitValueOptions = const Value.absent(),
+    this.habitReminder = const Value.absent(),
     this.habitAllowMultiple = const Value.absent(),
     this.habitFreezeEnabled = const Value.absent(),
     this.habitFreezeEarnInterval = const Value.absent(),
@@ -966,6 +1003,7 @@ class TrackersCompanion extends UpdateCompanion<Tracker> {
     Expression<DateTime>? modifiedAt,
     Expression<String>? habitPeriod,
     Expression<String>? habitValueOptions,
+    Expression<String>? habitReminder,
     Expression<bool>? habitAllowMultiple,
     Expression<bool>? habitFreezeEnabled,
     Expression<int>? habitFreezeEarnInterval,
@@ -992,6 +1030,7 @@ class TrackersCompanion extends UpdateCompanion<Tracker> {
       if (modifiedAt != null) 'modified_at': modifiedAt,
       if (habitPeriod != null) 'habit_period': habitPeriod,
       if (habitValueOptions != null) 'habit_value_options': habitValueOptions,
+      if (habitReminder != null) 'habit_reminder': habitReminder,
       if (habitAllowMultiple != null)
         'habit_allow_multiple': habitAllowMultiple,
       if (habitFreezeEnabled != null)
@@ -1026,6 +1065,7 @@ class TrackersCompanion extends UpdateCompanion<Tracker> {
       Value<DateTime>? modifiedAt,
       Value<String?>? habitPeriod,
       Value<String?>? habitValueOptions,
+      Value<String?>? habitReminder,
       Value<bool?>? habitAllowMultiple,
       Value<bool?>? habitFreezeEnabled,
       Value<int?>? habitFreezeEarnInterval,
@@ -1051,6 +1091,7 @@ class TrackersCompanion extends UpdateCompanion<Tracker> {
       modifiedAt: modifiedAt ?? this.modifiedAt,
       habitPeriod: habitPeriod ?? this.habitPeriod,
       habitValueOptions: habitValueOptions ?? this.habitValueOptions,
+      habitReminder: habitReminder ?? this.habitReminder,
       habitAllowMultiple: habitAllowMultiple ?? this.habitAllowMultiple,
       habitFreezeEnabled: habitFreezeEnabled ?? this.habitFreezeEnabled,
       habitFreezeEarnInterval:
@@ -1103,6 +1144,9 @@ class TrackersCompanion extends UpdateCompanion<Tracker> {
     }
     if (habitValueOptions.present) {
       map['habit_value_options'] = Variable<String>(habitValueOptions.value);
+    }
+    if (habitReminder.present) {
+      map['habit_reminder'] = Variable<String>(habitReminder.value);
     }
     if (habitAllowMultiple.present) {
       map['habit_allow_multiple'] = Variable<bool>(habitAllowMultiple.value);
@@ -1165,6 +1209,7 @@ class TrackersCompanion extends UpdateCompanion<Tracker> {
           ..write('modifiedAt: $modifiedAt, ')
           ..write('habitPeriod: $habitPeriod, ')
           ..write('habitValueOptions: $habitValueOptions, ')
+          ..write('habitReminder: $habitReminder, ')
           ..write('habitAllowMultiple: $habitAllowMultiple, ')
           ..write('habitFreezeEnabled: $habitFreezeEnabled, ')
           ..write('habitFreezeEarnInterval: $habitFreezeEarnInterval, ')
@@ -1624,6 +1669,7 @@ typedef $$TrackersTableCreateCompanionBuilder = TrackersCompanion Function({
   required DateTime modifiedAt,
   Value<String?> habitPeriod,
   Value<String?> habitValueOptions,
+  Value<String?> habitReminder,
   Value<bool?> habitAllowMultiple,
   Value<bool?> habitFreezeEnabled,
   Value<int?> habitFreezeEarnInterval,
@@ -1650,6 +1696,7 @@ typedef $$TrackersTableUpdateCompanionBuilder = TrackersCompanion Function({
   Value<DateTime> modifiedAt,
   Value<String?> habitPeriod,
   Value<String?> habitValueOptions,
+  Value<String?> habitReminder,
   Value<bool?> habitAllowMultiple,
   Value<bool?> habitFreezeEnabled,
   Value<int?> habitFreezeEarnInterval,
@@ -1724,6 +1771,9 @@ class $$TrackersTableFilterComposer
   ColumnFilters<String> get habitValueOptions => $composableBuilder(
       column: $table.habitValueOptions,
       builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get habitReminder => $composableBuilder(
+      column: $table.habitReminder, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get habitAllowMultiple => $composableBuilder(
       column: $table.habitAllowMultiple,
@@ -1839,6 +1889,10 @@ class $$TrackersTableOrderingComposer
       column: $table.habitValueOptions,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get habitReminder => $composableBuilder(
+      column: $table.habitReminder,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<bool> get habitAllowMultiple => $composableBuilder(
       column: $table.habitAllowMultiple,
       builder: (column) => ColumnOrderings(column));
@@ -1932,6 +1986,9 @@ class $$TrackersTableAnnotationComposer
 
   GeneratedColumn<String> get habitValueOptions => $composableBuilder(
       column: $table.habitValueOptions, builder: (column) => column);
+
+  GeneratedColumn<String> get habitReminder => $composableBuilder(
+      column: $table.habitReminder, builder: (column) => column);
 
   GeneratedColumn<bool> get habitAllowMultiple => $composableBuilder(
       column: $table.habitAllowMultiple, builder: (column) => column);
@@ -2030,6 +2087,7 @@ class $$TrackersTableTableManager extends RootTableManager<
             Value<DateTime> modifiedAt = const Value.absent(),
             Value<String?> habitPeriod = const Value.absent(),
             Value<String?> habitValueOptions = const Value.absent(),
+            Value<String?> habitReminder = const Value.absent(),
             Value<bool?> habitAllowMultiple = const Value.absent(),
             Value<bool?> habitFreezeEnabled = const Value.absent(),
             Value<int?> habitFreezeEarnInterval = const Value.absent(),
@@ -2056,6 +2114,7 @@ class $$TrackersTableTableManager extends RootTableManager<
             modifiedAt: modifiedAt,
             habitPeriod: habitPeriod,
             habitValueOptions: habitValueOptions,
+            habitReminder: habitReminder,
             habitAllowMultiple: habitAllowMultiple,
             habitFreezeEnabled: habitFreezeEnabled,
             habitFreezeEarnInterval: habitFreezeEarnInterval,
@@ -2082,6 +2141,7 @@ class $$TrackersTableTableManager extends RootTableManager<
             required DateTime modifiedAt,
             Value<String?> habitPeriod = const Value.absent(),
             Value<String?> habitValueOptions = const Value.absent(),
+            Value<String?> habitReminder = const Value.absent(),
             Value<bool?> habitAllowMultiple = const Value.absent(),
             Value<bool?> habitFreezeEnabled = const Value.absent(),
             Value<int?> habitFreezeEarnInterval = const Value.absent(),
@@ -2108,6 +2168,7 @@ class $$TrackersTableTableManager extends RootTableManager<
             modifiedAt: modifiedAt,
             habitPeriod: habitPeriod,
             habitValueOptions: habitValueOptions,
+            habitReminder: habitReminder,
             habitAllowMultiple: habitAllowMultiple,
             habitFreezeEnabled: habitFreezeEnabled,
             habitFreezeEarnInterval: habitFreezeEarnInterval,

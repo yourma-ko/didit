@@ -43,7 +43,8 @@ class _DiditAppState extends ConsumerState<DiditApp>
     _drive.signInSilently().then((_) => _maybeAutoBackup());
     ref.read(dbProvider).syncReminders();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ReminderPlatform.bindNotificationTap(_openReminder).catchError((Object _) {
+      ReminderPlatform.bindNotificationTap(_openReminder)
+          .catchError((Object _) {
         // Tapping a stale notification must never prevent startup.
       });
     });
@@ -70,7 +71,8 @@ class _DiditAppState extends ConsumerState<DiditApp>
 
   Future<void> _openReminder(int id) async {
     final db = ref.read(dbProvider);
-    final tracker = await (db.select(db.trackers)..where((t) => t.id.equals(id)))
+    final tracker = await (db.select(db.trackers)
+          ..where((t) => t.id.equals(id)))
         .getSingleOrNull();
     if (mounted && tracker != null) router.go('/tracker/$id');
   }

@@ -92,16 +92,18 @@ class _HabitEditScreenState extends ConsumerState<HabitEditScreen> {
     try {
       await _persist();
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not save habit. Please try again.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Could not save habit. Please try again.')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
   Future<void> _persist() async {
-
     final db = ref.read(dbProvider);
     final now = DateTime.now();
 
@@ -162,7 +164,8 @@ class _HabitEditScreenState extends ConsumerState<HabitEditScreen> {
     if (!mounted) return;
     if (!remindersSynced) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Habit saved, but reminders could not be scheduled. Reopen the app to retry.'),
+        content: Text(
+            'Habit saved, but reminders could not be scheduled. Reopen the app to retry.'),
       ));
     }
     context.go('/');
@@ -293,7 +296,9 @@ class _HabitEditScreenState extends ConsumerState<HabitEditScreen> {
               ),
             ],
             const SizedBox(height: 32),
-            FilledButton(onPressed: _saving ? null : _save, child: Text(_saving ? 'Saving…' : 'Save')),
+            FilledButton(
+                onPressed: _saving ? null : _save,
+                child: Text(_saving ? 'Saving…' : 'Save')),
             if (_isEditing) ...[
               const SizedBox(height: 8),
               TrackerArchiveButton(

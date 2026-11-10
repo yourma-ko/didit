@@ -13,8 +13,12 @@ class HabitReminder {
     this.minute = 0,
     Set<int> weekdays = const {1, 2, 3, 4, 5, 6, 7},
   }) : weekdays = Set.unmodifiable(weekdays) {
-    if (hour < 0 || hour > 23 || minute < 0 || minute > 59 ||
-        weekdays.isEmpty || weekdays.any((day) => day < 1 || day > 7)) {
+    if (hour < 0 ||
+        hour > 23 ||
+        minute < 0 ||
+        minute > 59 ||
+        weekdays.isEmpty ||
+        weekdays.any((day) => day < 1 || day > 7)) {
       throw const FormatException('Invalid habit reminder schedule');
     }
   }

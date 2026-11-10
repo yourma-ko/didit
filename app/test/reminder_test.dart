@@ -4,7 +4,7 @@ import 'package:didit/db/database.dart';
 import 'package:didit/features/reminders/habit_reminder.dart';
 import 'package:didit/features/reminders/reminder_fields.dart';
 import 'package:didit/features/reminders/reminder_platform.dart';
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +21,8 @@ void main() {
   });
 
   test('schedule round-trips and rejects invalid imported data', () {
-    final value = HabitReminder(enabled: true, hour: 23, minute: 59, weekdays: {5, 1});
+    final value =
+        HabitReminder(enabled: true, hour: 23, minute: 59, weekdays: {5, 1});
     expect(HabitReminder.decode(value.encode()).toJson(), value.toJson());
     expect(() => HabitReminder(hour: 24), throwsFormatException);
     expect(() => HabitReminder(weekdays: {}), throwsFormatException);
@@ -38,7 +39,9 @@ void main() {
       snapshots = [];
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(ReminderPlatform.channel, (call) async {
-        if (call.method == 'replace') snapshots.add(call.arguments as List<dynamic>);
+        if (call.method == 'replace') {
+          snapshots.add(call.arguments as List<dynamic>);
+        }
         return null;
       });
       db = AppDatabase.forTesting(NativeDatabase.memory());
@@ -54,12 +57,18 @@ void main() {
     Future<int> insert({String type = 'habit'}) async {
       final now = DateTime(2026, 11, 10);
       return db.into(db.trackers).insert(TrackersCompanion.insert(
-        name: 'Run', type: type, sortOrder: 1, createdAt: now, modifiedAt: now,
-        habitReminder: Value(HabitReminder(enabled: true, weekdays: {1, 4}).encode()),
-      ));
+            name: 'Run',
+            type: type,
+            sortOrder: 1,
+            createdAt: now,
+            modifiedAt: now,
+            habitReminder:
+                Value(HabitReminder(enabled: true, weekdays: {1, 4}).encode()),
+          ));
     }
 
-    test('edit, disable, archive, restore and deletion replace pending alarms', () async {
+    test('edit, disable, archive, restore and deletion replace pending alarms',
+        () async {
       final id = await insert();
       await insert(type: 'goal');
       expect(await db.syncReminders(), true);
@@ -82,7 +91,8 @@ void main() {
       expect(snapshots.last, isEmpty);
     });
 
-    test('backup restores schedules; old backup removes existing reminders', () async {
+    test('backup restores schedules; old backup removes existing reminders',
+        () async {
       await insert();
       final backup = await db.exportData();
       await db.importData(backup);
@@ -98,10 +108,15 @@ void main() {
     test('invalid imported reminder rolls back the whole import', () async {
       await insert();
       final backup = await db.exportData();
-      (backup['trackers'] as List).first['habitReminder'] = '{"enabled":true,"hour":99,"minute":0,"weekdays":[1]}';
+      (backup['trackers'] as List).first['habitReminder'] =
+          '{"enabled":true,"hour":99,"minute":0,"weekdays":[1]}';
       await expectLater(db.importData(backup), throwsFormatException);
       expect(await db.select(db.trackers).get(), hasLength(1));
-      expect(HabitReminder.decode((await db.select(db.trackers).getSingle()).habitReminder).hour, 9);
+      expect(
+          HabitReminder.decode(
+                  (await db.select(db.trackers).getSingle()).habitReminder)
+              .hour,
+          9);
     });
 
     test('a failed platform write does not poison the next retry', () async {
@@ -112,7 +127,8 @@ void main() {
       });
       expect(await db.syncReminders(), false);
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(ReminderPlatform.channel, (_) async => null);
+          .setMockMethodCallHandler(
+              ReminderPlatform.channel, (_) async => null);
       expect(await db.syncReminders(), true);
     });
 
@@ -120,9 +136,12 @@ void main() {
       await db.close();
       final executor = NativeDatabase.memory(setup: (raw) {
         // Reuse the generated schema except the column introduced in version 5.
-        raw.execute('CREATE TABLE trackers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, emoji TEXT, type TEXT NOT NULL, sort_order INTEGER NOT NULL, archived INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, modified_at INTEGER NOT NULL, habit_period TEXT, habit_value_options TEXT, habit_allow_multiple INTEGER, habit_freeze_enabled INTEGER, habit_freeze_earn_interval INTEGER, habit_freeze_limit INTEGER, habit_freeze_require_note INTEGER, habit_streak INTEGER, habit_longest_streak INTEGER, habit_freezes_available INTEGER, goal_unit TEXT, goal_target_amount REAL, goal_start_date INTEGER, goal_target_date INTEGER, goal_step_size REAL, goal_running_total REAL)');
-        raw.execute('CREATE TABLE logs (id INTEGER PRIMARY KEY AUTOINCREMENT, tracker_id INTEGER NOT NULL REFERENCES trackers(id), log_date TEXT NOT NULL, created_at INTEGER NOT NULL, modified_at INTEGER NOT NULL, value REAL, is_freeze INTEGER, note TEXT)');
-        raw.execute("INSERT INTO trackers (name, type, sort_order, created_at, modified_at) VALUES ('Existing habit', 'habit', 1, 0, 0)");
+        raw.execute(
+            'CREATE TABLE trackers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, emoji TEXT, type TEXT NOT NULL, sort_order INTEGER NOT NULL, archived INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, modified_at INTEGER NOT NULL, habit_period TEXT, habit_value_options TEXT, habit_allow_multiple INTEGER, habit_freeze_enabled INTEGER, habit_freeze_earn_interval INTEGER, habit_freeze_limit INTEGER, habit_freeze_require_note INTEGER, habit_streak INTEGER, habit_longest_streak INTEGER, habit_freezes_available INTEGER, goal_unit TEXT, goal_target_amount REAL, goal_start_date INTEGER, goal_target_date INTEGER, goal_step_size REAL, goal_running_total REAL)');
+        raw.execute(
+            'CREATE TABLE logs (id INTEGER PRIMARY KEY AUTOINCREMENT, tracker_id INTEGER NOT NULL REFERENCES trackers(id), log_date TEXT NOT NULL, created_at INTEGER NOT NULL, modified_at INTEGER NOT NULL, value REAL, is_freeze INTEGER, note TEXT)');
+        raw.execute(
+            "INSERT INTO trackers (name, type, sort_order, created_at, modified_at) VALUES ('Existing habit', 'habit', 1, 0, 0)");
         raw.execute('PRAGMA user_version = 4');
       });
       db = AppDatabase.forTesting(executor);
@@ -133,13 +152,18 @@ void main() {
     });
   });
 
-  testWidgets('reminder UI preserves at least one selected day', (tester) async {
+  testWidgets('reminder UI preserves at least one selected day',
+      (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(ReminderPlatform.channel, (_) async => {'notifications': true, 'exact': true});
+        .setMockMethodCallHandler(ReminderPlatform.channel,
+            (_) async => {'notifications': true, 'exact': true});
     var value = HabitReminder(enabled: true, weekdays: {1});
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: StatefulBuilder(
-      builder: (context, setState) => ReminderFields(value: value, onChanged: (next) => setState(() => value = next)),
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: StatefulBuilder(
+      builder: (context, setState) => ReminderFields(
+          value: value, onChanged: (next) => setState(() => value = next)),
     ))));
     await tester.pumpAndSettle();
     await tester.tap(find.byType(FilterChip).first);
