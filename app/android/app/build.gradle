@@ -38,7 +38,7 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.andluck.didit"
-        resValue "string", "app_name", "DidOne"
+        resValue "string", "app_name", "didone"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = Math.max(flutter.minSdkVersion, 23)
@@ -50,7 +50,7 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix ".habits.dev"
-            resValue "string", "app_name", "DidOne Habits Dev"
+            resValue "string", "app_name", "didone"
         }
         release {
             signingConfig = signingConfigs.release

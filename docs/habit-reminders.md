@@ -40,11 +40,11 @@ service are used.
 Closing the app normally (including removing it from Recents on standard Android)
 does not stop alarms. Android Force stop disables alarms until the app is opened
 again. Manufacturer battery restrictions can also delay or suppress delivery;
-allow background activity/autostart for DidOne Habits Dev if needed.
+allow background activity/autostart for didone if needed.
 
 ## APK without installing Flutter locally
 
-The `Build Habits APK` GitHub Actions workflow pins Flutter 3.44.0, JDK 17,
+The `Build didone APK` GitHub Actions workflow pins Flutter 3.44.0, JDK 17,
 Ubuntu 24.04 and uses the checked-in pub lockfile and Gradle wrapper version.
 It generates Drift code, formats changed Dart sources, runs analysis, all Flutter
 tests, builds an APK and runs Android recurrence tests. It runs on pull requests
@@ -52,11 +52,11 @@ to main and pushes to `habits-reminders`, or manually from Actions once the
 workflow exists on the default branch. This specifies the toolchain; it is not
 a promise of byte-for-byte identical APKs or immutable hosted runner images.
 
-1. Open the fork's Actions → Build Habits APK → successful run.
-2. Download the `didone-habits-apk` artifact and extract `app-debug.apk`.
+1. Open the fork's Actions → Build didone APK → successful run.
+2. Download the `didone-apk` artifact and extract `didone.apk`.
 3. Transfer the APK to the phone, open it and allow installation from that
    browser/file manager when Android asks.
-4. Open **DidOne Habits Dev**, restore a local backup if desired, and enable a
+4. Open **didone**, restore a local backup if desired, and enable a
    reminder. Grant notification permission and optionally exact alarms.
 
 The development package is `com.andluck.didit.habits.dev` and installs alongside

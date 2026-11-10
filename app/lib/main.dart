@@ -87,7 +87,7 @@ class _DiditAppState extends ConsumerState<DiditApp>
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'DidOne',
+      title: 'didone',
       theme: buildAppTheme(),
       routerConfig: router,
       debugShowCheckedModeBanner: false,
