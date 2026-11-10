@@ -13,6 +13,7 @@ import 'features/settings/drive_backup_service.dart';
 import 'db/database.dart';
 import 'router.dart';
 import 'theme.dart';
+import 'features/reminders/reminder_platform.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +41,12 @@ class _DiditAppState extends ConsumerState<DiditApp>
       ref.read(currentDateProvider.notifier).refresh();
     });
     _drive.signInSilently().then((_) => _maybeAutoBackup());
+    ref.read(dbProvider).syncReminders();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ReminderPlatform.bindNotificationTap(_openReminder).catchError((Object _) {
+        // Tapping a stale notification must never prevent startup.
+      });
+    });
   }
 
   @override
@@ -47,6 +54,7 @@ class _DiditAppState extends ConsumerState<DiditApp>
     if (state == AppLifecycleState.resumed) {
       ref.read(currentDateProvider.notifier).refresh();
       _maybeAutoBackup();
+      ref.read(dbProvider).syncReminders();
     }
   }
 
@@ -58,6 +66,13 @@ class _DiditAppState extends ConsumerState<DiditApp>
     } catch (_) {
       // Silent — auto backup must never interrupt the user
     }
+  }
+
+  Future<void> _openReminder(int id) async {
+    final db = ref.read(dbProvider);
+    final tracker = await (db.select(db.trackers)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    if (mounted && tracker != null) router.go('/tracker/$id');
   }
 
   @override

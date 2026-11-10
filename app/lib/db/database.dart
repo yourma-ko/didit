@@ -6,6 +6,8 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'tables.dart';
+import '../features/reminders/habit_reminder.dart';
+import '../features/reminders/reminder_platform.dart';
 
 part 'database.g.dart';
 
@@ -18,7 +20,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -36,6 +38,9 @@ class AppDatabase extends _$AppDatabase {
             // handed the same id after an import and inherit them — which is
             // how a brand-new goal ends up showing months-old logs.
             await deleteOrphanLogs();
+          }
+          if (from < 5) {
+            await m.addColumn(trackers, trackers.habitReminder);
           }
         },
         // Enforce logs.trackerId → trackers.id from here on, so no code path
@@ -62,6 +67,7 @@ class AppDatabase extends _$AppDatabase {
         modifiedAt: Value(DateTime.now()),
       ),
     );
+    await syncReminders();
   }
 
   /// Deletes a tracker and the logs belonging to it, as one transaction.
@@ -70,6 +76,39 @@ class AppDatabase extends _$AppDatabase {
       await (delete(logs)..where((l) => l.trackerId.equals(trackerId))).go();
       await (delete(trackers)..where((t) => t.id.equals(trackerId))).go();
     });
+    await syncReminders();
+  }
+
+  Future<void> _reminderSync = Future.value();
+
+  /// Serialize reads and platform writes so fast edits cannot restore old alarms.
+  /// The native snapshot is a delivery cache; SQLite remains authoritative.
+  Future<bool> syncReminders() async {
+    var succeeded = true;
+    final sync = _reminderSync.then((_) async {
+      if (!ReminderPlatform.isSupported) return;
+      final habits = await (select(trackers)
+            ..where((t) => t.type.equals('habit') & t.archived.equals(false)))
+          .get();
+      final reminders = <Map<String, dynamic>>[];
+      for (final habit in habits) {
+        final reminder = HabitReminder.decode(habit.habitReminder);
+        if (!reminder.enabled) continue;
+        reminders.add({
+          ...reminder.toJson(),
+          'id': habit.id,
+          'title': [habit.emoji, habit.name].whereType<String>().join(' '),
+        });
+      }
+      await ReminderPlatform.replace(reminders);
+    });
+    _reminderSync = sync.catchError((Object error, StackTrace stack) {
+      succeeded = false;
+      // A platform failure must not undo an already-saved habit or backup.
+      // Foreground startup/resume retries; the edit screen reports failures.
+    });
+    await _reminderSync;
+    return succeeded;
   }
 
   static QueryExecutor _openConnection() {
@@ -116,6 +155,7 @@ class AppDatabase extends _$AppDatabase {
       final trackerIds = <int>{};
       for (final t in (data['trackers'] as List)) {
         final tracker = Tracker.fromJson(t as Map<String, dynamic>);
+        HabitReminder.decode(tracker.habitReminder); // Validate before committing.
         await into(trackers).insert(tracker.toCompanion(true));
         trackerIds.add(tracker.id);
       }
@@ -126,6 +166,7 @@ class AppDatabase extends _$AppDatabase {
         await into(logs).insert(log.toCompanion(true));
       }
     });
+    await syncReminders();
   }
 }
 

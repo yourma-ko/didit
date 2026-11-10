@@ -35,6 +35,9 @@ Habit-only fields:
 - **HabitValueOptions** - ordered list of value labels; empty for binary habits
   (see below)
 - **HabitAllowMultiple** - whether multiple logs per period are allowed
+- **HabitReminder** - optional JSON: enabled, hour, minute, ISO weekdays 1–7.
+  A device-local wall-clock reminder, independent of the logging period. Null
+  means disabled. Schema 5 adds it without changing existing logs or streaks.
 - **HabitFreezeEnabled** - whether streak freezes are turned on
 - **HabitFreezeEarnInterval** - earn a freeze once every N days
 - **HabitFreezeLimit** - maximum freezes that can be accumulated

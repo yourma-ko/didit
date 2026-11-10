@@ -11,6 +11,8 @@ import '../../db/database.dart';
 import 'emoji_form_field.dart';
 import 'tracker_archive_button.dart';
 import 'tracker_delete_button.dart';
+import '../reminders/habit_reminder.dart';
+import '../reminders/reminder_fields.dart';
 
 class HabitEditScreen extends ConsumerStatefulWidget {
   final int? trackerId;
@@ -34,6 +36,8 @@ class _HabitEditScreenState extends ConsumerState<HabitEditScreen> {
   bool _freezeRequireNote = false;
   bool _loading = false;
   bool _archived = false;
+  bool _saving = false;
+  HabitReminder _reminder = HabitReminder();
 
   bool get _isEditing => widget.trackerId != null;
 
@@ -49,11 +53,13 @@ class _HabitEditScreenState extends ConsumerState<HabitEditScreen> {
     final tracker = await (db.select(db.trackers)
           ..where((t) => t.id.equals(widget.trackerId!)))
         .getSingle();
+    if (!mounted) return;
     setState(() {
       _nameController.text = tracker.name;
       _emojiController.text = tracker.emoji ?? '';
       _archived = tracker.archived;
       _period = tracker.habitPeriod ?? 'daily';
+      _reminder = HabitReminder.decode(tracker.habitReminder);
       _allowMultiple = tracker.habitAllowMultiple ?? false;
       _freezeEnabled = tracker.habitFreezeEnabled ?? false;
       _freezeEarnInterval = tracker.habitFreezeEarnInterval ?? 7;
@@ -80,7 +86,21 @@ class _HabitEditScreenState extends ConsumerState<HabitEditScreen> {
   }
 
   Future<void> _save() async {
+    if (_saving) return;
     if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+    try {
+      await _persist();
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not save habit. Please try again.')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _persist() async {
 
     final db = ref.read(dbProvider);
     final now = DateTime.now();
@@ -100,6 +120,7 @@ class _HabitEditScreenState extends ConsumerState<HabitEditScreen> {
         name: Value(_nameController.text.trim()),
         emoji: Value(emoji),
         habitPeriod: Value(_period),
+        habitReminder: Value(_reminder.encode()),
         habitValueOptions: Value(valueOptionsJson),
         habitAllowMultiple: Value(_allowMultiple),
         habitFreezeEnabled: Value(_freezeEnabled),
@@ -123,6 +144,7 @@ class _HabitEditScreenState extends ConsumerState<HabitEditScreen> {
             type: 'habit',
             sortOrder: sortOrder,
             habitPeriod: Value(_period),
+            habitReminder: Value(_reminder.encode()),
             habitValueOptions: Value(valueOptionsJson),
             habitAllowMultiple: Value(_allowMultiple),
             habitFreezeEnabled: Value(_freezeEnabled),
@@ -136,7 +158,14 @@ class _HabitEditScreenState extends ConsumerState<HabitEditScreen> {
           ));
     }
 
-    if (mounted) context.go('/');
+    final remindersSynced = await db.syncReminders();
+    if (!mounted) return;
+    if (!remindersSynced) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Habit saved, but reminders could not be scheduled. Reopen the app to retry.'),
+      ));
+    }
+    context.go('/');
   }
 
   @override
@@ -178,6 +207,11 @@ class _HabitEditScreenState extends ConsumerState<HabitEditScreen> {
               ],
               selected: {_period},
               onSelectionChanged: (s) => setState(() => _period = s.first),
+            ),
+            const Divider(height: 32),
+            ReminderFields(
+              value: _reminder,
+              onChanged: (value) => setState(() => _reminder = value),
             ),
             const SizedBox(height: 24),
             Row(
@@ -259,7 +293,7 @@ class _HabitEditScreenState extends ConsumerState<HabitEditScreen> {
               ),
             ],
             const SizedBox(height: 32),
-            FilledButton(onPressed: _save, child: const Text('Save')),
+            FilledButton(onPressed: _saving ? null : _save, child: Text(_saving ? 'Saving…' : 'Save')),
             if (_isEditing) ...[
               const SizedBox(height: 8),
               TrackerArchiveButton(

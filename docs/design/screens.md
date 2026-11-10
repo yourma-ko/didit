@@ -127,6 +127,12 @@ Configure value options: leave empty for a binary habit, or add ordered labels
 
 Configure streak freezes (see [data model](data-model.md#streak-freezes)).
 
+On Android, configure an optional local reminder: enable/disable, select the
+local time and every day or selected weekdays. At least one day must remain
+selected. The schedule is independent of the habit period. The form reports
+blocked notification/exact-alarm permissions and links to Android settings.
+See [reminder behavior and APK installation](../habit-reminders.md).
+
 ### Create or edit Goal
 
 Edit all the common tracker settings.
